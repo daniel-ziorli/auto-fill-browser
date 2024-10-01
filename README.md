@@ -1,21 +1,32 @@
-# <img src="public/icons/icon_48.png" width="45" align="left"> Auto Fill Browser
+# Auto Fill Browser
 
-My Chrome Extension
+Browser Chat is a Chrome extension that allows you to quickly fill out forms
+using personal context.
 
-## Features
+# Features
 
-- Feature 1
-- Feature 2
+- Fill out input and text areas
+- Select item from drop downs
+- Check radio buttons
 
-## Install
+Great for filling out those pesky forms!
 
-[**Chrome** extension]() <!-- TODO: Add chrome extension link inside parenthesis -->
+## Getting Started
 
-## Contribution
+1. Clone this repository
+2. Run `npm install`
+3. Run `npm run build`
+4. Open Chrome and go to `chrome://extensions`
+5. Enable Developer Mode
+6. Click on "Load unpacked" and select the build folder
+7. Pin the extension
 
-Suggestions and pull requests are welcomed!.
+## Usage
 
----
-
-This project was bootstrapped with [Chrome Extension CLI](https://github.com/dutiyesh/chrome-extension-cli)
-
+1. Open a web page in Chrome
+2. Click on the Browser Chat extension icon in the toolbar
+3. Add your Google API key from [here](https://aistudio.google.com/app/apikey)
+   (this is stored locally)
+4. Add any context that you want to use when filling information out
+5. Go to any website with inputs and hit Ctrl + Shift + F to auto fill the
+   various forms

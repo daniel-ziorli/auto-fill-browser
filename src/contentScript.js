@@ -1,43 +1,59 @@
 'use strict';
+import Browser from "webextension-polyfill";
+import { cleanHTML } from "./utils";
 
-// Content script file will run in the context of web page.
-// With content script you can manipulate the web pages using
-// Document Object Model (DOM).
-// You can also pass information to the parent extension.
-
-// We execute this script by making an entry in manifest.json file
-// under `content_scripts` property
-
-// For more information on Content Scripts,
-// See https://developer.chrome.com/extensions/content_scripts
-
-// Log `title` of current active web page
-const pageTitle = document.head.getElementsByTagName('title')[0].innerHTML;
-console.log(
-  `Page title is: '${pageTitle}' - evaluated by Chrome extension's 'contentScript.js' file`
-);
-
-// Communicate with background file by sending a message
-chrome.runtime.sendMessage(
-  {
-    type: 'GREETINGS',
-    payload: {
-      message: 'Hello, my name is Con. I am from ContentScript.',
-    },
-  },
-  (response) => {
-    console.log(response.message);
-  }
-);
-
-// Listen for message
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type === 'COUNT') {
-    console.log(`Current count is ${request.payload.count}`);
+Browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.action === 'get_html') {
+    sendResponse({ success: true, html: cleanHTML(document.body.outerHTML) });
   }
 
-  // Send an empty response
-  // See https://github.com/mozilla/webextension-polyfill/issues/130#issuecomment-531531890
-  sendResponse({});
-  return true;
+  if (request.action === 'set_element_value') {
+    let element = document.getElementById(request.id);
+
+    if (!element) {
+      element = document.querySelector(`[name="${request.name}"]`);
+    }
+    if (!element) {
+      sendResponse({ success: false, error: 'Element not found' });
+    }
+
+    if (element.tagName === 'SELECT') {
+      for (let i = 0; i < element.options.length; i++) {
+        if (element.options[i].value === request.value) {
+          element.options.selectedIndex = i;
+          element.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+          break;
+        }
+      }
+    } else if (element.tagName === 'INPUT' && element.type === 'radio') {
+      const radioButtons = document.querySelectorAll(`input[type="radio"][name="${element.name}"]`);
+      let selectedRadio;
+      radioButtons.forEach(radio => {
+        if (radio.value === request.value) {
+          selectedRadio = radio;
+        } else if (!selectedRadio && radio.id === request.id) {
+          selectedRadio = radio;
+        }
+      });
+      if (selectedRadio) {
+        selectedRadio.checked = true;
+        selectedRadio.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
+        selectedRadio.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+        selectedRadio.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+      }
+    } else if (element.tagName === 'INPUT' && element.type === 'checkbox') {
+      element.checked = request.value === true || request.value === 'true';
+      element.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
+      element.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+    } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+      element.value = request.value;
+      const event = new Event('input', { bubbles: true, cancelable: true });
+      event.simulated = true;
+      element.dispatchEvent(event);
+      element.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+    }
+    sendResponse({ success: true });
+  }
 });
+

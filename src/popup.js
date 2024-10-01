@@ -1,112 +1,35 @@
 'use strict';
 
 import './popup.css';
+import Browser from "webextension-polyfill";
+// Save API key and personal information to local storage
+const saveBtn = document.getElementById('saveBtn');
+const apiKeyInput = document.getElementById('apiKey');
+const personalInfoInput = document.getElementById('personalInfo');
 
-(function () {
-  // We will make use of Storage API to get and store `count` value
-  // More information on Storage API can we found at
-  // https://developer.chrome.com/extensions/storage
+const init = async () => {
+    const storage = await Browser.storage.local.get(['api_key', 'personal_info']);
+    apiKeyInput.value = storage.api_key || '';
+    personalInfoInput.value = storage.personal_info || '';
+}
 
-  // To get storage access, we have to mention it in `permissions` property of manifest.json file
-  // More information on Permissions can we found at
-  // https://developer.chrome.com/extensions/declare_permissions
-  const counterStorage = {
-    get: (cb) => {
-      chrome.storage.sync.get(['count'], (result) => {
-        cb(result.count);
-      });
-    },
-    set: (value, cb) => {
-      chrome.storage.sync.set(
-        {
-          count: value,
-        },
-        () => {
-          cb();
-        }
-      );
-    },
-  };
+init();
 
-  function setupCounter(initialValue = 0) {
-    document.getElementById('counter').innerHTML = initialValue;
+saveBtn.addEventListener('click', async () => {
+    const apiKey = apiKeyInput.value;
+    const personalInfo = personalInfoInput.value;
 
-    document.getElementById('incrementBtn').addEventListener('click', () => {
-      updateCounter({
-        type: 'INCREMENT',
-      });
-    });
-
-    document.getElementById('decrementBtn').addEventListener('click', () => {
-      updateCounter({
-        type: 'DECREMENT',
-      });
-    });
-  }
-
-  function updateCounter({ type }) {
-    counterStorage.get((count) => {
-      let newCount;
-
-      if (type === 'INCREMENT') {
-        newCount = count + 1;
-      } else if (type === 'DECREMENT') {
-        newCount = count - 1;
-      } else {
-        newCount = count;
-      }
-
-      counterStorage.set(newCount, () => {
-        document.getElementById('counter').innerHTML = newCount;
-
-        // Communicate with content script of
-        // active tab by sending a message
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          const tab = tabs[0];
-
-          chrome.tabs.sendMessage(
-            tab.id,
-            {
-              type: 'COUNT',
-              payload: {
-                count: newCount,
-              },
-            },
-            (response) => {
-              console.log('Current count value passed to contentScript file');
-            }
-          );
-        });
-      });
-    });
-  }
-
-  function restoreCounter() {
-    // Restore count value
-    counterStorage.get((count) => {
-      if (typeof count === 'undefined') {
-        // Set counter value as 0
-        counterStorage.set(0, () => {
-          setupCounter(0);
-        });
-      } else {
-        setupCounter(count);
-      }
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', restoreCounter);
-
-  // Communicate with background file by sending a message
-  chrome.runtime.sendMessage(
-    {
-      type: 'GREETINGS',
-      payload: {
-        message: 'Hello, my name is Pop. I am from Popup.',
-      },
-    },
-    (response) => {
-      console.log(response.message);
+    try {
+        await Browser.storage.local.set({ api_key: apiKey, personal_info: personalInfo });
+        const indicator = document.getElementById('saved-indicator');
+        indicator.style.display = 'block';
+        saveBtn.style.display = 'none';
+        setTimeout(() => {
+            indicator.style.display = 'none';
+            saveBtn.style.display = 'block';
+        }, 2000);
+    } catch (error) {
+        alert('Error saving to local storage: ' + error);
     }
-  );
-})();
+});
+

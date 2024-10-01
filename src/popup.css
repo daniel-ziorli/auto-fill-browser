@@ -1,92 +1,69 @@
-/* normalize css starts here */
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-/* normalize css ends here */
-
-html {
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial,
-    sans-serif;
-  color: #222;
-}
-
+/* Set the background color and text color */
 body {
-  width: 350px;
-  height: 300px;
+    background-color: #333;
+    color: #fff;
 }
 
-.app {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  text-align: center;
-  padding: 20px;
+/* Set the font family to Open Sans */
+body,
+h1,
+p,
+input,
+textarea {
+    font-family: 'Open Sans', sans-serif;
+    margin-block: 5px;
 }
 
-.title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 10px;
+/* Style the text inputs and textarea */
+input,
+textarea {
+    min-width: 350px;
+    max-width: 750px;
+    max-height: 370px;
+    border: none;
+    border-radius: 5px;
+    background-color: #444;
+    color: #fff;
 }
 
-.subtitle {
-  font-size: 12px;
+/* Style the button */
+button {
+    width: 100%;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
-code {
-  font-size: 12px;
-  font-family: inherit;
-  background-color: rgba(254, 237, 185, 0.3);
-  padding: 2px 4px;
-  border-radius: 2px;
+/* Style the button on hover */
+button:hover {
+    background-color: #0056b3;
 }
 
-.counter-label {
-  font-size: 12px;
-  margin-bottom: 5px;
+
+/* modern scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    background-color: #444;
+    border-radius: 10px;
 }
 
-.counter {
-  font-size: 36px;
-  font-weight: 700;
+::-webkit-scrollbar-thumb {
+    background-color: #999;
+    border-radius: 10px;
 }
 
-.button-container {
-  margin-top: 15px;
+::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
+    cursor: pointer;
 }
 
-.button {
-  border: 0;
-  display: inline-block;
-  padding: 10px 20px;
-  margin-right: 4px;
-  margin-left: 4px;
-  background-color: bisque;
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: 4px;
-  text-decoration: none;
-  transition: transform 0.2s ease;
-  user-select: none;
+::-webkit-resizer {
+    background-color: #999;
 }
 
-.button:focus {
-  outline: none;
-}
-
-.button:hover {
-  transform: scale(1.1);
-}
-
-.divider {
-  margin: 30px auto 25px;
-  width: 50px;
-  border: 0.5px dashed #000;
-  opacity: 0.1;
+::-webkit-resizer:hover {
+    cursor: pointer;
 }

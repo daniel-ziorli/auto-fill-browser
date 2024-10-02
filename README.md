@@ -3,7 +3,7 @@
 Browser Chat is a Chrome extension that allows you to quickly fill out forms
 using personal context.
 
-# Features
+### Features
 
 - Fill out input and text areas
 - Select item from drop downs

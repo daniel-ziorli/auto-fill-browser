@@ -23,9 +23,6 @@ const fill_inputs = async () => {
         2. understand what type of website it is and what information is needed to fill it out.
         3. read through the user's personal info.
         4. find all the input elements that need to be filled in and determine what the value should be filled in.
-          Text inputs must be strings.
-          Never fill in files.
-          Don't answer questions the user will do it themselves.
         5. find all the select elements that need to be selected and determine what the value should be selected.
         6. find all the radio buttons determine which radio button should be selected in the group.
           Radio buttons will have multiple elements with the same name, your goal is to find the one that matches the user's personal info.

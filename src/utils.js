@@ -116,42 +116,34 @@ export async function llmCall({
   return result
 }
 
-export function findElementByPartialValue(partialValue) {
-  const allElements = document.body.querySelectorAll('*');
-  const matchingElements = [];
-
-  allElements.forEach(el => {
-    for (let i = 0; i < el.attributes.length; i++) {
-      const attr = el.attributes[i];
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.textContent.trim() === '' || !attr.value.includes(partialValue)) {
-        continue
-      }
-      matchingElements.push(el);
-      break;
-    }
-  });
-
-  return matchingElements;
-}
 
 export function cleanHTML(document) {
-  const elements = document.body.querySelectorAll('input, select, textarea');
-  return [...elements].map(el => {
-    const relevantElement = document.createElement(el.tagName);
-
-    if (el.id) relevantElement.setAttribute('id', el.id);
-    if (el.name) relevantElement.setAttribute('name', el.name);
-    const ariaAttributes = ['id', 'name', 'placeholder', 'aria-label', 'aria-placeholder'];
-    ariaAttributes.forEach(attr => {
-      if (!el.hasAttribute(attr)) {
-        return;
+  let output = ''
+  const iterator = document.createNodeIterator(document.body, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  let node;
+  let text_output = ''
+  while ((node = iterator.nextNode())) {
+    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
+      text_output += `${node.textContent.trim()}\n`
+    } else if (node.tagName && ['INPUT', 'SELECT', 'TEXTAREA'].includes(node.tagName)) {
+      if (node.type === 'file') {
+        text_output = '';
+        continue;
       }
-      relevantElement.setAttribute(attr, el.getAttribute(attr));
-    });
+      const relevantElement = document.createElement(node.tagName);
+      if (node.id) relevantElement.setAttribute('id', node.id);
+      if (node.name) relevantElement.setAttribute('name', node.name);
+      const ariaAttributes = ['id', 'name', 'placeholder', 'aria-label', 'aria-placeholder'];
+      ariaAttributes.forEach(attr => {
+        if (!node.hasAttribute(attr)) {
+          return;
+        }
+        relevantElement.setAttribute(attr, node.getAttribute(attr));
+      });
 
-    if (el.textContent) relevantElement.textContent = el.textContent;
-
-    const id_match = [...new Set(findElementByPartialValue(el.id))].filter(el => el.textContent.trim() !== '')
-    return [...(id_match.map(el => el.textContent.trim())), relevantElement.outerHTML].join('\n');
-  }).join('\n\n');
+      output += `${text_output}\n${relevantElement.outerHTML}\n\n`
+      text_output = ''
+    }
+  }
+  return output;
 }

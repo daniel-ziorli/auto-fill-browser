@@ -116,36 +116,42 @@ export async function llmCall({
   return result
 }
 
-export function cleanHTML(html) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
+export function findElementByPartialValue(partialValue) {
+  const allElements = document.body.querySelectorAll('*');
+  const matchingElements = [];
 
-  function cleanNode(node) {
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(node.tagName)) {
-        node.parentNode.removeChild(node);
+  allElements.forEach(el => {
+    for (let i = 0; i < el.attributes.length; i++) {
+      const attr = el.attributes[i];
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.textContent.trim() === '' || !attr.value.includes(partialValue)) {
+        continue
+      }
+      matchingElements.push(el);
+      break;
+    }
+  });
+
+  return matchingElements;
+}
+
+export function cleanHTML(document) {
+  const elements = document.body.querySelectorAll('input, select, textarea');
+  return [...elements].map(el => {
+    const relevantElement = document.createElement(el.tagName);
+
+    if (el.id) relevantElement.setAttribute('id', el.id);
+    if (el.name) relevantElement.setAttribute('name', el.name);
+    const ariaAttributes = ['id', 'name', 'placeholder', 'aria-label', 'aria-placeholder'];
+    ariaAttributes.forEach(attr => {
+      if (!el.hasAttribute(attr)) {
         return;
       }
+      relevantElement.setAttribute(attr, el.getAttribute(attr));
+    });
 
-      const attrs = node.attributes;
-      for (let i = attrs.length - 1; i >= 0; i--) {
-        const attrName = attrs[i].name;
-        if (!['id', 'class', 'name', 'placeholder', 'type', 'value', 'label', 'ariaLabel'].includes(attrName)) {
-          node.removeAttribute(attrName);
-        }
-      }
+    if (el.textContent) relevantElement.textContent = el.textContent;
 
-      Array.from(node.childNodes).forEach(cleanNode);
-    } else if (node.nodeType === Node.TEXT_NODE) {
-      node.textContent = node.textContent.trim();
-      if (node.textContent === '') {
-        node.parentNode.removeChild(node);
-      }
-    } else {
-      node.parentNode.removeChild(node);
-    }
-  }
-
-  cleanNode(doc.body);
-  return doc.body.innerHTML;
+    const id_match = [...new Set(findElementByPartialValue(el.id))].filter(el => el.textContent.trim() !== '')
+    return [...(id_match.map(el => el.textContent.trim())), relevantElement.outerHTML].join('\n');
+  }).join('\n\n');
 }

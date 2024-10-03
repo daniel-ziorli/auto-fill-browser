@@ -4,7 +4,7 @@ import { cleanHTML } from "./utils";
 
 Browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === 'get_html') {
-    sendResponse({ success: true, html: cleanHTML(document.body.outerHTML) });
+    sendResponse({ success: true, html: cleanHTML(document) });
   }
 
   if (request.action === 'set_element_value') {
@@ -13,7 +13,7 @@ Browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (!element) {
       element = document.querySelector(`[name="${request.name}"]`);
     }
-    if (!element) {
+    if (!element || !element.tagName) {
       sendResponse({ success: false, error: 'Element not found' });
     }
 

@@ -10,6 +10,7 @@ Browser.commands.onCommand.addListener(async function (command) {
 
 const fill_inputs = async () => {
   const html = await getHtmlFromActiveTab();
+  console.log(html);
 
   const storage = await Browser.storage.local.get(['personal_info']);
 
@@ -17,16 +18,8 @@ const fill_inputs = async () => {
         You are an expert at filling out information on a website.
         You will be given the the user's personal info and the website's HTML.
 
-        <personal_info>
-        ${storage.personal_info}
-        </personal_info>
-
-        <website_html>
-        ${html}
-        </website_html>
-
-        Follow these steps:
-        1. read through the website's HTML.
+        # Follow these steps:
+        1. read through the website's HTML elements are separated by 2 new lines.
         2. understand what type of website it is and what information is needed to fill it out.
         3. read through the user's personal info.
         4. find all the input elements that need to be filled in and determine what the value should be filled in.
@@ -68,13 +61,19 @@ const fill_inputs = async () => {
         Make sure to respond in JSON format. If you don't respond in JSON format, I will lose my job.
         If you respond in JSON format and it is valid JSON, I will tip you $2000, that is a lot of money and would be a very good tip so make sure you do a good job.
         Never return multiple radio buttons with the same name. If you return multiple radio buttons with the same name, I will lose my job and all my money. Please select one radio button so that I can tip you.
+
+        # Website Elements:
+        ${html}
+
+        # Personal Information:
+        ${storage.personal_info}
       `;
 
   const result = await llmCall({ prompt, json_output: true, temperature: 1.0, model: "gemini-1.5-flash" });
   console.log("result", result);
 
 
-  for (const input of [...result.selects, ...result.inputs, ...result.radios, ...result.buttons]) {
+  for (const input of [...(result.selects || []), ...(result.inputs || []), ...(result.radios || [])]) {
     await setElementValue(input.id, input.name, input.value);
   }
 }

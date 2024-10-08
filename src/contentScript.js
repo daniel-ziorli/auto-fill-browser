@@ -14,18 +14,25 @@ Browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 });
 
 const setElementValue = async (id, name, value) => {
-  let element = document.getElementById(id);
+  let element = undefined;
 
-  if (!element) {
+  if (id) {
+    element = document.getElementById(id);
+  }
+
+  if (!element && name) {
     element = document.querySelector(`[name="${name}"]`);
   }
+
   if (!element || !element.tagName) {
     sendResponse({ success: false, error: 'Element not found' });
   }
 
   if (element.tagName === 'SELECT') {
     for (let i = 0; i < element.options.length; i++) {
-      if (element.options[i].value === value) {
+      console.log(element.options[i].value, value, element.options[i].textContent, value);
+
+      if (element.options[i].value === value || element.options[i].textContent === value) {
         element.options.selectedIndex = i;
         element.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
         break;
@@ -37,7 +44,7 @@ const setElementValue = async (id, name, value) => {
     radioButtons.forEach(radio => {
       if (radio.value === value) {
         selectedRadio = radio;
-      } else if (!selectedRadio && radio.id === id) {
+      } else if (!selectedRadio && (radio.id === (id || '') || radio.name === (name || ''))) {
         selectedRadio = radio;
       }
     });

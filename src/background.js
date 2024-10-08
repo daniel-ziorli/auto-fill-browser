@@ -9,8 +9,8 @@ Browser.commands.onCommand.addListener(async function (command) {
 });
 
 const fill_inputs = async () => {
-  const html = await getHtmlFromActiveTab();
-  console.log(html);
+  const html_response = await getHtmlFromActiveTab();
+  console.log(html_response.content);
 
   const storage = await Browser.storage.local.get(['personal_info']);
 
@@ -60,7 +60,7 @@ const fill_inputs = async () => {
         Never return multiple radio buttons with the same name. If you return multiple radio buttons with the same name, I will lose my job and all my money. Please select one radio button so that I can tip you.
 
         # Website Elements:
-        ${html}
+        ${html_response.content}
 
         # Personal Information:
         ${storage.personal_info}
@@ -71,6 +71,6 @@ const fill_inputs = async () => {
 
 
   for (const input of [...(result.selects || []), ...(result.inputs || []), ...(result.radios || [])]) {
-    await setElementValue(input.id, input.name, input.value);
+    await setElementValue(html_response.tabId, input.id || '', input.name || '', input.value || '');
   }
 }

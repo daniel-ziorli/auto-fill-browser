@@ -25,18 +25,19 @@ export const writeLocalStorage = async (key, value) => {
 };
 
 export const getHtmlFromActiveTab = async () => {
-  const tab = (await Browser.tabs.query({ active: true, currentWindow: true }))[0];
+  const tab = (await Browser.tabs.query({ active: true, lastFocusedWindow: true, currentWindow: true }))[0];
+  console.log('tab', tab);
+
   const response = await Browser.tabs.sendMessage(tab.id, { action: 'get_html' });
   if (response.success) {
-    return response.html;
+    return { content: response.html, tabId: tab.id };
   }
 
   return response;
 };
 
-export const setElementValue = async (id, name, value) => {
-  const tab = await Browser.tabs.query({ active: true, currentWindow: true });
-  const response = await Browser.tabs.sendMessage(tab[0].id, { action: "set_element_value", id, value, name });
+export const setElementValue = async (tabId, id, name, value) => {
+  const response = await Browser.tabs.sendMessage(tabId, { action: "set_element_value", id, value, name });
 
   if (response.success) {
     return;
@@ -118,32 +119,35 @@ export async function llmCall({
 
 
 export function cleanHTML(document) {
-  let output = ''
-  const iterator = document.createNodeIterator(document.body, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
-  let node;
-  let text_output = ''
-  while ((node = iterator.nextNode())) {
-    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
-      text_output += `${node.textContent.trim()}\n`
-    } else if (node.tagName && ['INPUT', 'SELECT', 'TEXTAREA'].includes(node.tagName)) {
-      if (node.type === 'file') {
-        text_output = '';
-        continue;
-      }
-      const relevantElement = document.createElement(node.tagName);
-      if (node.id) relevantElement.setAttribute('id', node.id);
-      if (node.name) relevantElement.setAttribute('name', node.name);
-      const ariaAttributes = ['id', 'name', 'placeholder', 'aria-label', 'aria-placeholder'];
-      ariaAttributes.forEach(attr => {
-        if (!node.hasAttribute(attr)) {
-          return;
-        }
-        relevantElement.setAttribute(attr, node.getAttribute(attr));
-      });
+  console.log(document);
 
-      output += `${text_output}\n${relevantElement.outerHTML}\n\n`
-      text_output = ''
-    }
-  }
-  return output;
+  const elements = [...document.querySelectorAll('input, select, textarea')].filter(
+    el => !el.outerHTML.includes('recaptcha') && !el.outerHTML.includes('hidden')
+  );
+  console.log(elements);
+
+  return [...elements].map(el => {
+    const relevantElement = document.createElement(el.tagName);
+
+    if (el.id) relevantElement.setAttribute('id', el.id);
+    if (el.name) relevantElement.setAttribute('name', el.name);
+    const ariaAttributes = ['id', 'name', 'placeholder', 'aria-label', 'aria-placeholder', 'autocomplete', 'aria-autocomplete'];
+    ariaAttributes.forEach(attr => {
+      if (!el.hasAttribute(attr)) {
+        return;
+      }
+      relevantElement.setAttribute(attr, el.getAttribute(attr));
+    });
+
+    if (el.textContent) relevantElement.textContent = el.textContent;
+
+    const labelElements = [...document.querySelectorAll(`label[for="${el.id}"]`)].map(label => {
+      const relevantLabel = document.createElement('label');
+      relevantLabel.setAttribute('for', el.id);
+      relevantLabel.textContent = label.textContent;
+      return relevantLabel;
+    });
+
+    return [[...labelElements].map(el => el.outerHTML), el.parentElement.textContent, relevantElement.outerHTML].join('\n');
+  }).join('\n\n');
 }
